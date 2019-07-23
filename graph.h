@@ -4,6 +4,7 @@
 #include <iterator>
 #include <iostream>
 #include <list>
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
@@ -20,6 +21,8 @@ struct CompareByValue {
   }
 };
 
+
+
 template<typename N, typename E>
 class Graph {
  public:
@@ -30,11 +33,15 @@ class Graph {
     Node(N);
 
     N GetValue() const;
-    void AddEdgeTo(std::shared_ptr<Node>&, E cost);
+    bool AddEdgeTo(const std::shared_ptr<Node>&, const E&);
+    bool IsEdge(const N&);
+    std::vector<N> GetEdges();
+    std::vector<E> GetWeights(const N&);
 
    private:
     N value_;
-    //std::unordered_map<std::weak_ptr<Node>, E> edges_to_;
+    // make value  vector of E
+    std::map<std::weak_ptr<Node>, E, std::owner_less<std::weak_ptr<Node>>> edges_to_;
   };
 
   Graph<N,E>();
@@ -45,6 +52,14 @@ class Graph {
   Graph<N,E>(gdwg::Graph<N,E>&&) noexcept;
   ~Graph<N,E>() noexcept = default;
 
+  bool InsertNode(const N&);
+  bool InsertEdge(const N&, const N&, const E&);
+  bool IsNode(const N&);
+  bool IsConnected(const N&, const N&);
+  std::vector<N> GetNodes();
+  std::vector<N> GetConnected(const N&);
+  std::vector<E> GetWeights(const N&, const N&);
+  
  private:
   std::set<std::shared_ptr<Node>, CompareByValue<Node>> nodes_;
 
