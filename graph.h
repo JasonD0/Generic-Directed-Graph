@@ -33,15 +33,18 @@ class Graph {
     Node(N);
 
     N GetValue() const;
+    void SetValue(const N&);
     bool AddEdgeTo(const std::shared_ptr<Node>&, const E&);
     bool IsEdge(const N&);
+    bool DeleteEdge(const N&, const E&);
     std::vector<N> GetEdges();
     std::vector<E> GetWeights(const N&);
 
    private:
     N value_;
     // make value  vector of E
-    std::map<std::weak_ptr<Node>, E, std::owner_less<std::weak_ptr<Node>>> edges_to_;
+    std::map<std::weak_ptr<Node>, E, std::owner_less<std::weak_ptr<Node>>> edges_out_;
+    //std::map<std::weak_ptr<Node>, E, std::owner_less<std::weak_ptr<Node>>> edges_in_;
   };
 
   Graph<N,E>();
@@ -52,14 +55,23 @@ class Graph {
   Graph<N,E>(gdwg::Graph<N,E>&&) noexcept;
   ~Graph<N,E>() noexcept = default;
 
+  Graph<N,E>& operator=(const gdwg::Graph<N,E>&);
+  Graph<N,E>& operator=(gdwg::Graph<N,E>&&);
+
   bool InsertNode(const N&);
   bool InsertEdge(const N&, const N&, const E&);
+  bool DeleteNode(const N&);
+  bool Replace(const N&, const N&);
+  void MergeReplace(const N&, const N&);
+  void Clear();
   bool IsNode(const N&);
   bool IsConnected(const N&, const N&);
   std::vector<N> GetNodes();
   std::vector<N> GetConnected(const N&);
   std::vector<E> GetWeights(const N&, const N&);
-  
+  bool erase(const N&, const N&, const E&);
+
+
  private:
   std::set<std::shared_ptr<Node>, CompareByValue<Node>> nodes_;
 
