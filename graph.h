@@ -39,6 +39,8 @@ class Graph {
     bool DeleteEdge(const N&, const E&);
     std::vector<N> GetEdges();
     std::vector<E> GetWeights(const N&);
+    std::vector<std::pair<std::weak_ptr<Node>,E>> EdgesWeights();
+    E GetWeight(const N&);
 
    private:
     N value_;

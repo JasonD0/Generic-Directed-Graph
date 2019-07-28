@@ -122,11 +122,25 @@ void gdwg::Graph<N,E>::MergeReplace(const N& oldData, const N& newData) {
   auto old_it = std::find_if(nodes_.begin(), nodes_.end(), [&oldData](std::shared_ptr<Node> const& n) {return n->GetValue() == oldData;});
   auto new_it = std::find_if(nodes_.begin(), nodes_.end(), [&newData](std::shared_ptr<Node> const& n) {return n->GetValue() == newData;});
 
-  // remove oldData from set      get edges beforehand (outgoing edges)
-  auto outgoing_edges = old_it->get()->GetConnected();
   nodes_.erase(old_it);
 
-  // somehow get incoming edgse
+  // outgoing edges
+  auto pair = old_it->get()->EdgesWeights();
+  for (const auto& ew : pair) {
+    std::shared_ptr<Node> node = ew.first.lock();
+    auto n = node->GetValue();
+    auto cost = ew.second;
+    auto it = std::find_if(nodes_.begin(), nodes_.end(), [&n](std::shared_ptr<Node> const& s) {return s->GetValue() == n;});
+    new_it->get()->AddEdgeTo(*it, cost);
+  }
+
+  // incoming edges
+  for (const auto& node : nodes_) {
+    if (!node->IsEdge(newData)) {
+      continue;
+    }
+    node->AddEdgeTo(*new_it, node->GetWeight(newData));
+  }
 }
 
 template <typename N, typename E>
@@ -285,4 +299,23 @@ std::vector<E> gdwg::Graph<N,E>::Node::GetWeights(const N& dest) {
   return v;
 }
 
+template<typename N, typename E>
+std::vector<std::pair<std::weak_ptr<typename gdwg::Graph<N,E>::Node>, E>> gdwg::Graph<N, E>::Node::EdgesWeights() {
+   std::vector<std::pair<std::weak_ptr<Node>, E>> v;
 
+  for (auto it = edges_out_.begin(); it != edges_out_.end(); ++it) {
+    std::pair<std::weak_ptr<Node>, E> p{it->first, it->second};
+    v.push_back(p);
+  }
+
+  return v;
+}
+
+template <typename N, typename E>
+E gdwg::Graph<N,E>::Node::GetWeight(const N& n) {
+  auto it = std::find_if(edges_out_.begin(), edges_out_.end(), [&n](std::pair<std::weak_ptr<Node>, E> const& p) {
+    std::shared_ptr<Node> sp = p.first.lock();
+    return sp->GetValue() == n;
+  });
+  return it->second;
+}
