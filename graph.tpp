@@ -221,36 +221,46 @@ bool gdwg::Graph<N,E>::erase(const N& src, const N& dest, const E& w) {
   return src_itr->get()->DeleteEdge(dest, w);
 }
 
+template <typename N, typename E>
+typename gdwg::Graph<N,E>::const_iterator gdwg::Graph<N,E>::find(const N& src, const N& dest, const E& cost) {
+  for (auto it = begin(); it != end(); ++it) {
+    auto nodeFrom = std::get<0>(*it);
+    auto nodeTo = std::get<1>(*it);
+    auto edgeCost = std::get<2>(*it);
+    if (src == nodeFrom && dest == nodeTo && cost == edgeCost) {
+      return it;
+    }
+  }
+  return cend();
+}
 
-
-/*
-typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator outer_itr_;
-const typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator end_itr_;
-typename std::map<std::weak_ptr<Node>, E, std::owner_less<std::weak_ptr<Node>>>::iterator inner_itr_;
- */
+template <typename N, typename E>
+typename gdwg::Graph<N,E>::const_iterator gdwg::Graph<N,E>::erase(const_iterator it) {
+  for (auto itr = begin(); itr != end(); ++itr) {
+    if (it == itr) {
+      auto nodeFrom = std::get<0>(*it);
+      auto nodeTo = std::get<1>(*it);
+      auto edgeCost = std::get<2>(*it);
+      auto tmp = ++it;
+      erase(nodeFrom, nodeTo, edgeCost);
+      return tmp;
+    }
+  }
+  return cend();
+}
 
 template <typename N, typename E>
 typename gdwg::Graph<N,E>::const_iterator gdwg::Graph<N,E>::cbegin() {
-  /*const_iterator it;
-  it.outer_itr_ = std::find_if(nodes_.begin(), nodes_.end(), [](std::shared_ptr<Node> const& n) {return n;});
-  it.end_itr_ = nodes_.end();
-  if (it.outer_itr_ != it.end_itr_) {
-    it.inner_itr_ = it.outer_itr_->get()->edges_out_.begin();
-    return it;
-  }*/
-  auto first = std::find_if(nodes_.begin(), nodes_.end(), [](std::shared_ptr<Node> const& n) {return n;});
+  auto first = nodes_.begin();
   if (first != nodes_.end()) {
-    return {first, nodes_.end(), first->get()->edges_out_.begin()};
+    return {first, nodes_.end(), first->get()->edges_out_.begin(), first->get()->edges_out_.end()};
   }
   return cend();
 }
 
 template <typename N, typename E>
 typename gdwg::Graph<N,E>::const_iterator gdwg::Graph<N,E>::cend() {
-  /*const_iterator it;
-  it.outer_itr_ = nodes_.end();
-  it.end_itr_ = nodes_.end();*/
-  return {nodes_.end(), nodes_.end(), {}};
+  return {nodes_.end(), nodes_.end(), {}, {}};
 }
 
 template <typename N, typename E>
@@ -284,6 +294,7 @@ typename gdwg::Graph<N,E>::const_reverse_iterator gdwg::Graph<N,E>::rend() {
   return crend();
 }
 
+
 /* iterator methods */
 template<typename N, typename E>
 typename gdwg::Graph<N,E>::const_iterator::reference gdwg::Graph<N,E>::const_iterator::operator*() const {
@@ -293,13 +304,23 @@ typename gdwg::Graph<N,E>::const_iterator::reference gdwg::Graph<N,E>::const_ite
   return {nodeFrom, nodeTo, cost};
 }
 
-/*template<typename N, typename E>
+template<typename N, typename E>
 typename gdwg::Graph<N,E>::const_iterator& gdwg::Graph<N,E>::const_iterator::operator++() {
-
-}*/
+  ++inner_itr_;
+  if (inner_itr_ == inner_end_itr_) {
+    do {
+      ++outer_itr_;
+      if (outer_itr_ != outer_end_itr_) {
+        inner_itr_ = outer_itr_->get()->edges_out_.begin();
+        inner_end_itr_ = outer_itr_->get()->edges_out_.end();
+      }
+    } while (outer_itr_ != outer_end_itr_ && inner_itr_ == inner_end_itr_);
+  }
+  return *this;
+}
 
 template<typename N, typename E>
-typename gdwg::Graph<N,E>::const_iterator gdwg::Graph<N,E>::const_iterator::operator++(int) {
+const typename gdwg::Graph<N,E>::const_iterator gdwg::Graph<N,E>::const_iterator::operator++(int) {
   auto tmp{*this};
   ++(*this);
   return tmp;

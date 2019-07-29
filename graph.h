@@ -56,11 +56,11 @@ class Graph {
 
     reference operator*() const;
     const_iterator& operator++();
-    const_iterator operator++(int);
+    const const_iterator operator++(int);
     const_iterator operator--();
 
     friend bool operator==(const const_iterator& lhs, const const_iterator& rhs) {
-      return lhs.outer_itr_ == rhs.outer_itr_ && (lhs.outer_itr_ == lhs.end_itr_ || lhs.inner_itr_ == rhs.inner_itr_);
+      return lhs.outer_itr_ == rhs.outer_itr_ && (lhs.outer_itr_ == lhs.outer_end_itr_ || lhs.inner_itr_ == rhs.inner_itr_);
     }
     friend bool operator!=(const const_iterator& lhs, const const_iterator& rhs) {
       return !(lhs == rhs);
@@ -70,10 +70,11 @@ class Graph {
     friend class Graph;
 
     typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator outer_itr_;
-    typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator end_itr_;
+    typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator outer_end_itr_;
     typename std::map<std::weak_ptr<Node>, E, std::owner_less<std::weak_ptr<Node>>>::iterator inner_itr_;
+    typename std::map<std::weak_ptr<Node>, E, std::owner_less<std::weak_ptr<Node>>>::iterator inner_end_itr_;
 
-    const_iterator(const decltype(outer_itr_)& outer, const decltype(end_itr_)& end, const decltype(inner_itr_)& inner): outer_itr_{outer}, end_itr_{end}, inner_itr_{inner} {}
+    const_iterator(const decltype(outer_itr_)& outer, const decltype(outer_end_itr_)& outer_end, const decltype(inner_itr_)& inner, const decltype(inner_end_itr_)& inner_end): outer_itr_{outer}, outer_end_itr_{outer_end}, inner_itr_{inner}, inner_end_itr_{inner_end} {}
   };
 
   Graph<N,E>();
@@ -101,7 +102,7 @@ class Graph {
   bool erase(const N&, const N&, const E&);
 
 
-  const_iterator erase(const_iterator it);
+  const_iterator erase(const_iterator);
   const_iterator find(const N&, const N&, const E&);
 
   const_iterator cbegin();
