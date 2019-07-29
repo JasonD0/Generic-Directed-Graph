@@ -223,6 +223,92 @@ bool gdwg::Graph<N,E>::erase(const N& src, const N& dest, const E& w) {
 
 
 
+/*
+typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator outer_itr_;
+const typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator end_itr_;
+typename std::map<std::weak_ptr<Node>, E, std::owner_less<std::weak_ptr<Node>>>::iterator inner_itr_;
+ */
+
+template <typename N, typename E>
+typename gdwg::Graph<N,E>::const_iterator gdwg::Graph<N,E>::cbegin() {
+  /*const_iterator it;
+  it.outer_itr_ = std::find_if(nodes_.begin(), nodes_.end(), [](std::shared_ptr<Node> const& n) {return n;});
+  it.end_itr_ = nodes_.end();
+  if (it.outer_itr_ != it.end_itr_) {
+    it.inner_itr_ = it.outer_itr_->get()->edges_out_.begin();
+    return it;
+  }*/
+  auto first = std::find_if(nodes_.begin(), nodes_.end(), [](std::shared_ptr<Node> const& n) {return n;});
+  if (first != nodes_.end()) {
+    return {first, nodes_.end(), first->get()->edges_out_.begin()};
+  }
+  return cend();
+}
+
+template <typename N, typename E>
+typename gdwg::Graph<N,E>::const_iterator gdwg::Graph<N,E>::cend() {
+  /*const_iterator it;
+  it.outer_itr_ = nodes_.end();
+  it.end_itr_ = nodes_.end();*/
+  return {nodes_.end(), nodes_.end(), {}};
+}
+
+template <typename N, typename E>
+typename gdwg::Graph<N,E>::const_reverse_iterator gdwg::Graph<N,E>::crbegin() {
+  return rbegin();
+}
+
+template <typename N, typename E>
+typename gdwg::Graph<N,E>::const_reverse_iterator gdwg::Graph<N,E>::crend() {
+  return rend();
+}
+
+
+template <typename N, typename E>
+typename gdwg::Graph<N,E>::const_iterator gdwg::Graph<N,E>::begin() {
+  return cbegin();
+}
+
+template <typename N, typename E>
+typename gdwg::Graph<N,E>::const_iterator gdwg::Graph<N, E>::end() {
+  return cend();
+}
+
+template <typename N, typename E>
+typename gdwg::Graph<N,E>::const_reverse_iterator gdwg::Graph<N,E>::rbegin() {
+  return crbegin();
+}
+
+template <typename N, typename E>
+typename gdwg::Graph<N,E>::const_reverse_iterator gdwg::Graph<N,E>::rend() {
+  return crend();
+}
+
+/* iterator methods */
+template<typename N, typename E>
+typename gdwg::Graph<N,E>::const_iterator::reference gdwg::Graph<N,E>::const_iterator::operator*() const {
+  const auto& nodeFrom = outer_itr_->get()->GetValue();
+  const auto& nodeTo = inner_itr_->first.lock()->GetValue();
+  const auto& cost = inner_itr_->second;
+  return {nodeFrom, nodeTo, cost};
+}
+
+/*template<typename N, typename E>
+typename gdwg::Graph<N,E>::const_iterator& gdwg::Graph<N,E>::const_iterator::operator++() {
+
+}*/
+
+template<typename N, typename E>
+typename gdwg::Graph<N,E>::const_iterator gdwg::Graph<N,E>::const_iterator::operator++(int) {
+  auto tmp{*this};
+  ++(*this);
+  return tmp;
+}
+
+
+
+
+
 /* Node methods */
 template<typename N, typename E>
 gdwg::Graph<N, E>::Node::Node(N value) : value_{value} {
@@ -319,3 +405,4 @@ E gdwg::Graph<N,E>::Node::GetWeight(const N& n) {
   });
   return it->second;
 }
+

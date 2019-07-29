@@ -21,13 +21,9 @@ struct CompareByValue {
   }
 };
 
-
-
 template<typename N, typename E>
 class Graph {
  public:
-  class const_iterator {};
-
   class Node {
    public:
     Node(N);
@@ -43,10 +39,41 @@ class Graph {
     E GetWeight(const N&);
 
    private:
+    friend class Graph;
+
     N value_;
-    // make value  vector of E
     std::map<std::weak_ptr<Node>, E, std::owner_less<std::weak_ptr<Node>>> edges_out_;
     //std::map<std::weak_ptr<Node>, E, std::owner_less<std::weak_ptr<Node>>> edges_in_;
+  };
+
+  class const_iterator {
+   public:
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = std::tuple<const N, const N, const E>;
+    using reference = std::tuple<const N&, const N&, const E&>;
+    //using pointer = std::tuple<const N, const N, const E>*;
+    using difference_type = int;
+
+    reference operator*() const;
+    const_iterator& operator++();
+    const_iterator operator++(int);
+    const_iterator operator--();
+
+    friend bool operator==(const const_iterator& lhs, const const_iterator& rhs) {
+      return lhs.outer_itr_ == rhs.outer_itr_ && (lhs.outer_itr_ == lhs.end_itr_ || lhs.inner_itr_ == rhs.inner_itr_);
+    }
+    friend bool operator!=(const const_iterator& lhs, const const_iterator& rhs) {
+      return !(lhs == rhs);
+    }
+
+   private:
+    friend class Graph;
+
+    typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator outer_itr_;
+    typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator end_itr_;
+    typename std::map<std::weak_ptr<Node>, E, std::owner_less<std::weak_ptr<Node>>>::iterator inner_itr_;
+
+    const_iterator(const decltype(outer_itr_)& outer, const decltype(end_itr_)& end, const decltype(inner_itr_)& inner): outer_itr_{outer}, end_itr_{end}, inner_itr_{inner} {}
   };
 
   Graph<N,E>();
@@ -72,6 +99,22 @@ class Graph {
   std::vector<N> GetConnected(const N&);
   std::vector<E> GetWeights(const N&, const N&);
   bool erase(const N&, const N&, const E&);
+
+
+  const_iterator erase(const_iterator it);
+  const_iterator find(const N&, const N&, const E&);
+
+  const_iterator cbegin();
+  const_iterator cend();
+  const_iterator begin();
+  const_iterator end();
+
+  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+  const_reverse_iterator crbegin();
+  const_reverse_iterator crend();
+  const_reverse_iterator rbegin();
+  const_reverse_iterator rend();
 
 
  private:
