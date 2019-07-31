@@ -28,6 +28,13 @@ struct CompareByValue {
   }
 };
 
+template <typename P>
+struct Comparator {
+  bool operator()(const P& lhs, const P& rhs) const {
+    return lhs < rhs;
+  }
+};
+
 template<typename N, typename E>
 class Graph {
  public:
@@ -42,28 +49,26 @@ class Graph {
     bool DeleteEdge(const N&, const E&);
     std::vector<N> GetEdges() const;
     std::vector<E> GetWeights(const N&) const;
-    std::vector<std::pair<std::weak_ptr<Node>,E>> EdgesWeights() const;
-    E GetWeight(const N&) const;
+    std::vector<std::pair<std::weak_ptr<Node>, std::set<E>>> EdgesWeights() const;
 
    private:
     friend class Graph;
 
     N value_;
-    std::map<std::weak_ptr<Node>, E, CompareByValue<Node>> edges_out_;
+    std::map<std::weak_ptr<Node>, std::set<E>, CompareByValue<Node>> edges_out_;
   };
 
   class const_iterator {
    public:
     using iterator_category = std::bidirectional_iterator_tag;
-    using value_type = std::tuple<const N, const N, const E>;
+    using value_type = std::tuple<N, N, E>;
     using reference = std::tuple<const N&, const N&, const E&>;
-    //using pointer = std::tuple<const N, const N, const E>*;
     using difference_type = int;
 
-    reference operator*() const;
+    value_type operator*() const;
     const_iterator& operator++();
     const const_iterator operator++(int);
-    const_iterator operator--();
+    const_iterator& operator--();
 
     friend bool operator==(const const_iterator& lhs, const const_iterator& rhs) {
       return lhs.outer_itr_ == rhs.outer_itr_ && (lhs.outer_itr_ == lhs.outer_end_itr_ || lhs.inner_itr_ == rhs.inner_itr_);
@@ -77,8 +82,8 @@ class Graph {
 
     typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator outer_itr_;
     const typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator outer_end_itr_;
-    typename std::map<std::weak_ptr<Node>, E, std::owner_less<std::weak_ptr<Node>>>::iterator inner_itr_;
-    typename std::map<std::weak_ptr<Node>, E, std::owner_less<std::weak_ptr<Node>>>::iterator inner_end_itr_;
+    typename std::map<std::weak_ptr<Node>, std::set<E>, std::owner_less<std::weak_ptr<Node>>>::iterator inner_itr_;
+    typename std::map<std::weak_ptr<Node>, std::set<E>, std::owner_less<std::weak_ptr<Node>>>::iterator inner_end_itr_;
 
     const_iterator(const decltype(outer_itr_)& outer, const decltype(outer_end_itr_)& outer_end, const decltype(inner_itr_)& inner, const decltype(inner_end_itr_)& inner_end): outer_itr_{outer}, outer_end_itr_{outer_end}, inner_itr_{inner}, inner_end_itr_{inner_end} {}
   };
@@ -123,24 +128,24 @@ class Graph {
   const_reverse_iterator rbegin() const;
   const_reverse_iterator rend() const;
 
-  template <typename M, typename R>
-  friend bool operator==(const gdwg::Graph<M,R>&, const gdwg::Graph<M,R>&);
-  template <typename M, typename R>
-  friend bool operator!=(const gdwg::Graph<M,R>&, const gdwg::Graph<M,R>&);
-  template <typename M, typename R>
-  friend std::ostream& operator<<(std::ostream& os, const Graph<M,R>& g);
+  template <typename F, typename U>
+  friend bool operator==(const gdwg::Graph<F,U>&, const gdwg::Graph<F,U>&);
+  template <typename F, typename U>
+  friend bool operator!=(const gdwg::Graph<F,U>&, const gdwg::Graph<F,U>&);
+  template <typename F, typename U>
+  friend std::ostream& operator<<(std::ostream& os, const Graph<F,U>& g);
 
  private:
   std::set<std::shared_ptr<Node>, CompareByValue<Node>> nodes_;
 
 };
 
-template <typename M, typename R>
-std::ostream& operator<<(std::ostream& os, const Graph<M,R>& g);
-template <typename M, typename R>
-bool operator==(const gdwg::Graph<M,R>&, const gdwg::Graph<M,R>&);
-template <typename M, typename R>
-bool operator!=(const gdwg::Graph<M,R>&, const gdwg::Graph<M,R>&);
+template <typename F, typename U>
+std::ostream& operator<<(std::ostream& os, const Graph<F,U>& g);
+template <typename F, typename U>
+bool operator==(const gdwg::Graph<F,U>&, const gdwg::Graph<F, U>&);
+template <typename F, typename U>
+bool operator!=(const gdwg::Graph<F,U>&, const gdwg::Graph<F,U>&);
 
 }  // namespace gdwg
 
