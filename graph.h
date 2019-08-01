@@ -82,8 +82,8 @@ class Graph {
 
     typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator outer_itr_;
     const typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator outer_end_itr_;
-    typename std::map<std::weak_ptr<Node>, std::set<E>, std::owner_less<std::weak_ptr<Node>>>::iterator inner_itr_;
-    typename std::map<std::weak_ptr<Node>, std::set<E>, std::owner_less<std::weak_ptr<Node>>>::iterator inner_end_itr_;
+    typename std::map<std::weak_ptr<Node>, std::set<E>, CompareByValue<Node>>::iterator inner_itr_;
+    typename std::map<std::weak_ptr<Node>, std::set<E>, CompareByValue<Node>>::iterator inner_end_itr_;
 
     const_iterator(const decltype(outer_itr_)& outer, const decltype(outer_end_itr_)& outer_end, const decltype(inner_itr_)& inner, const decltype(inner_end_itr_)& inner_end): outer_itr_{outer}, outer_end_itr_{outer_end}, inner_itr_{inner}, inner_end_itr_{inner_end} {}
   };
@@ -149,6 +149,6 @@ bool operator!=(const gdwg::Graph<F,U>&, const gdwg::Graph<F,U>&);
 
 }  // namespace gdwg
 
-#include "assignments/dg/graph.tpp"
+#include "graph.tpp"
 
 #endif  // ASSIGNMENTS_DG_GRAPH_H_

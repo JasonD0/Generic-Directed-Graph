@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include "assignments/dg/graph.h"
+#include "graph.h"
 
 
 template <typename N, typename E>
@@ -226,10 +226,8 @@ bool gdwg::Graph<N,E>::erase(const N& src, const N& dest, const E& w) {
 template <typename N, typename E>
 typename gdwg::Graph<N,E>::const_iterator gdwg::Graph<N,E>::find(const N& src, const N& dest, const E& cost) const {
   for (auto it = begin(); it != end(); ++it) {
-    auto nodeFrom = std::get<0>(*it);
-    auto nodeTo = std::get<1>(*it);
-    auto edgeCost = std::get<2>(*it);
-    if (src == nodeFrom && dest == nodeTo && cost == edgeCost) {
+    auto [from, to, weight] = *it;
+    if (src == from && dest == to && cost == weight) {
       return it;
     }
   }
@@ -240,11 +238,9 @@ template <typename N, typename E>
 typename gdwg::Graph<N,E>::const_iterator gdwg::Graph<N,E>::erase(const_iterator it) {
   for (auto itr = begin(); itr != end(); ++itr) {
     if (it == itr) {
-      auto nodeFrom = std::get<0>(*it);
-      auto nodeTo = std::get<1>(*it);
-      auto edgeCost = std::get<2>(*it);
+      auto [src, dest, cost] = *it;
       auto tmp = ++it;
-      erase(nodeFrom, nodeTo, edgeCost);
+      erase(src, dest, cost);
       return tmp;
     }
   }
@@ -338,12 +334,8 @@ template <typename F, typename U>
 bool gdwg::operator==(const gdwg::Graph<F,U>& g1, const gdwg::Graph<F,U>& g2) {
   auto it1 = g1.begin(), it2 = g2.begin();
   for (; it1 != g1.end() && it2 != g2.end(); ++it1, ++it2) {
-    auto n1_1 = std::get<0>(*it1);
-    auto n2_1 = std::get<0>(*it2);
-    auto n1_2 = std::get<0>(*it1);
-    auto n2_2 = std::get<0>(*it2);
-    auto c1 = std::get<0>(*it1);
-    auto c2 = std::get<0>(*it2);
+    auto [n1_1, n1_2, c1] = *it1;
+    auto [n2_1, n2_2, c2] = *it2;
     if (n1_1 != n2_1 && n1_2 != n2_2 && c1 != c2) {
       return false;
     }
@@ -370,9 +362,7 @@ std::ostream& gdwg::operator<<(std::ostream& os, const gdwg::Graph<F,U>& g) {
 
   int flag = 0;
   for (auto it = g.begin(); it != g.end(); ++it) {
-    F src = std::get<0>(*it);
-    F dest = std::get<1>(*it);
-    U cost = std::get<2>(*it);
+    auto [src, dest, cost] = *it;
 
     if (currNode != src) {
       ++flag;
