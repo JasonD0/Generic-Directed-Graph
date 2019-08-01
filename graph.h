@@ -129,23 +129,78 @@ class Graph {
   const_reverse_iterator rend() const;
 
   template <typename F, typename U>
-  friend bool operator==(const gdwg::Graph<F,U>&, const gdwg::Graph<F,U>&);
+  friend bool operator==(const gdwg::Graph<F,U>& g1, const gdwg::Graph<F,U>& g2) {
+    auto it1 = g1.begin(), it2 = g2.begin();
+    for (; it1 != g1.end() && it2 != g2.end(); ++it1, ++it2) {
+      auto [n1_1, n1_2, c1] = *it1;
+      auto [n2_1, n2_2, c2] = *it2;
+      if (n1_1 != n2_1 && n1_2 != n2_2 && c1 != c2) {
+        return false;
+      }
+    }
+    return !((it1 == g1.end() && it2 != g2.end()) || (it1 != g1.end() && it2 == g2.end()));
+  }
+
   template <typename F, typename U>
-  friend bool operator!=(const gdwg::Graph<F,U>&, const gdwg::Graph<F,U>&);
+  friend bool operator!=(const gdwg::Graph<F,U>& g1, const gdwg::Graph<F,U>& g2) {
+    return !(g1 == g2);
+  }
+ 
   template <typename F, typename U>
-  friend std::ostream& operator<<(std::ostream& os, const Graph<F,U>& g);
+  friend std::ostream& operator<<(std::ostream& os, const Graph<F,U>& g) {
+    auto nodes = g.GetNodes();
+    std::reverse(nodes.begin(), nodes.end());
+
+    F currNode = nodes.back();
+    os << currNode << " (\n";
+    if (g.begin() == g.end()) {
+      os << ")\n";
+      nodes.pop_back();
+    }
+
+    int flag = 0;
+    for (auto it = g.begin(); it != g.end(); ++it) {
+      auto [src, dest, cost] = *it;
+
+      if (currNode != src) {
+        ++flag;
+        os << ")\n";
+        nodes.pop_back();
+
+        while (currNode != src && nodes.size() != 0) {
+          currNode = nodes.back();
+          if (currNode != src) {
+            nodes.pop_back();
+            os << currNode << " (\n";
+            os << ")\n";
+          }
+        }
+
+        os << currNode << " (\n";
+      }
+
+      os << "  " << dest << " | " << cost <<"\n";
+    }
+
+    if (flag == 0) {
+      os << ")\n";
+      nodes.pop_back();
+    }
+
+    while (nodes.size() != 0) {
+      currNode = nodes.back();
+      nodes.pop_back();
+      os << currNode << " (\n";
+      os << ")\n";
+    }
+
+    return os;
+  }
 
  private:
   std::set<std::shared_ptr<Node>, CompareByValue<Node>> nodes_;
 
 };
-
-template <typename F, typename U>
-std::ostream& operator<<(std::ostream& os, const Graph<F,U>& g);
-template <typename F, typename U>
-bool operator==(const gdwg::Graph<F,U>&, const gdwg::Graph<F, U>&);
-template <typename F, typename U>
-bool operator!=(const gdwg::Graph<F,U>&, const gdwg::Graph<F,U>&);
 
 }  // namespace gdwg
 
