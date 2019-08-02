@@ -49,13 +49,13 @@ class Graph {
     bool DeleteEdge(const N&, const E&);
     std::vector<N> GetEdges() const;
     std::vector<E> GetWeights(const N&) const;
-    std::vector<std::pair<std::weak_ptr<Node>, std::set<E>>> EdgesWeights() const;
+    std::vector<std::pair<std::weak_ptr<Node>, std::set<E, Comparator<E>>>> EdgesWeights() const;
 
    private:
     friend class Graph;
 
     N value_;
-    std::map<std::weak_ptr<Node>, std::set<E>, CompareByValue<Node>> edges_out_;
+    std::map<std::weak_ptr<Node>, std::set<E, Comparator<E>>, CompareByValue<Node>> edges_out_;
   };
 
   class const_iterator {
@@ -63,15 +63,19 @@ class Graph {
     using iterator_category = std::bidirectional_iterator_tag;
     using value_type = std::tuple<N, N, E>;
     using reference = std::tuple<const N&, const N&, const E&>;
+    //using reference_ = std::tuple<const N&>;
+    using pointer = std::tuple<N, N, E>*;
     using difference_type = int;
 
     value_type operator*() const;
     const_iterator& operator++();
     const const_iterator operator++(int);
     const_iterator& operator--();
+    const const_iterator operator--(int);
 
     friend bool operator==(const const_iterator& lhs, const const_iterator& rhs) {
-      return lhs.outer_itr_ == rhs.outer_itr_ && (lhs.outer_itr_ == lhs.outer_end_itr_ || lhs.inner_itr_ == rhs.inner_itr_);
+      //return lhs.outer_itr_ == rhs.outer_itr_ && (lhs.outer_itr_ == lhs.outer_end_itr_ || lhs.inner_itr_ == rhs.inner_itr_);
+      return lhs.node_from_itr_ == rhs.node_from_itr_ && (lhs.node_from_itr_ == lhs.node_from_end_ || (lhs.node_to_itr_ == rhs.node_to_itr_ && (lhs.node_to_itr_ == lhs.node_to_end_ || lhs.weight_itr_ == rhs.weight_itr_)));
     }
     friend bool operator!=(const const_iterator& lhs, const const_iterator& rhs) {
       return !(lhs == rhs);
@@ -80,12 +84,23 @@ class Graph {
    private:
     friend class Graph;
 
-    typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator outer_itr_;
-    const typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator outer_end_itr_;
-    typename std::map<std::weak_ptr<Node>, std::set<E>, CompareByValue<Node>>::iterator inner_itr_;
-    typename std::map<std::weak_ptr<Node>, std::set<E>, CompareByValue<Node>>::iterator inner_end_itr_;
+    bool Next();
+    bool Prev();
 
-    const_iterator(const decltype(outer_itr_)& outer, const decltype(outer_end_itr_)& outer_end, const decltype(inner_itr_)& inner, const decltype(inner_end_itr_)& inner_end): outer_itr_{outer}, outer_end_itr_{outer_end}, inner_itr_{inner}, inner_end_itr_{inner_end} {}
+    typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator node_from_itr_;
+    const typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator node_from_start_;
+    const typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator node_from_end_;
+    typename std::map<std::weak_ptr<Node>, std::set<E, Comparator<E>>, CompareByValue<Node>>::iterator node_to_itr_;
+    typename std::map<std::weak_ptr<Node>, std::set<E, Comparator<E>>, CompareByValue<Node>>::iterator node_to_start_;
+    typename std::map<std::weak_ptr<Node>, std::set<E, Comparator<E>>, CompareByValue<Node>>::iterator node_to_end_;
+    typename std::set<E, Comparator<E>>::iterator weight_itr_;
+    typename std::set<E, Comparator<E>>::iterator weight_start_;
+    typename std::set<E, Comparator<E>>::iterator weight_end_;
+
+    const_iterator(const decltype(node_from_itr_)& from, const decltype(node_from_start_)& from_start, const decltype(node_from_end_)& from_end,
+                  const decltype(node_to_itr_)& to, const decltype(node_to_start_)& to_start, const decltype(node_to_end_)& to_end,
+                  const decltype(weight_itr_)& weight, const decltype(weight_start_)& weight_start, const decltype(weight_end_)& weight_end)
+      : node_from_itr_{from}, node_from_start_{from_start}, node_from_end_{from_end}, node_to_itr_{to}, node_to_start_{to_start}, node_to_end_{to_end}, weight_itr_{weight}, weight_start_{weight_start}, weight_end_{weight_end} {}
   };
 
   Graph<N,E>();
@@ -145,7 +160,7 @@ class Graph {
   friend bool operator!=(const gdwg::Graph<F,U>& g1, const gdwg::Graph<F,U>& g2) {
     return !(g1 == g2);
   }
- 
+
   template <typename F, typename U>
   friend std::ostream& operator<<(std::ostream& os, const Graph<F,U>& g) {
     auto nodes = g.GetNodes();
