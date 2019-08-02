@@ -63,11 +63,10 @@ class Graph {
     using iterator_category = std::bidirectional_iterator_tag;
     using value_type = std::tuple<N, N, E>;
     using reference = std::tuple<const N&, const N&, const E&>;
-    //using reference_ = std::tuple<const N&>;
-    using pointer = std::tuple<N, N, E>*;
+    using pointer = std::tuple<const N, const N, const E>*;
     using difference_type = int;
 
-    value_type operator*() const;
+    reference operator*() const;
     const_iterator& operator++();
     const const_iterator operator++(int);
     const_iterator& operator--();
@@ -75,6 +74,7 @@ class Graph {
 
     friend bool operator==(const const_iterator& lhs, const const_iterator& rhs) {
       //return lhs.outer_itr_ == rhs.outer_itr_ && (lhs.outer_itr_ == lhs.outer_end_itr_ || lhs.inner_itr_ == rhs.inner_itr_);
+      //return lhs.node_from_itr_ == rhs.node_from_itr_ && (lhs.node_from_itr_ == lhs.node_from_end_ || lhs.node_to_itr_ == rhs.node_to_itr_);
       return lhs.node_from_itr_ == rhs.node_from_itr_ && (lhs.node_from_itr_ == lhs.node_from_end_ || (lhs.node_to_itr_ == rhs.node_to_itr_ && (lhs.node_to_itr_ == lhs.node_to_end_ || lhs.weight_itr_ == rhs.weight_itr_)));
     }
     friend bool operator!=(const const_iterator& lhs, const const_iterator& rhs) {
@@ -168,18 +168,13 @@ class Graph {
 
     F currNode = nodes.back();
     os << currNode << " (\n";
-    if (g.begin() == g.end()) {
-      os << ")\n";
-      nodes.pop_back();
-    }
+    bool matching_brackets = false;
 
-    int flag = 0;
     for (auto it = g.begin(); it != g.end(); ++it) {
       auto [src, dest, cost] = *it;
-
       if (currNode != src) {
-        ++flag;
         os << ")\n";
+        matching_brackets = true;
         nodes.pop_back();
 
         while (currNode != src && nodes.size() != 0) {
@@ -192,12 +187,12 @@ class Graph {
         }
 
         os << currNode << " (\n";
+        matching_brackets = false;
       }
-
       os << "  " << dest << " | " << cost <<"\n";
     }
 
-    if (flag == 0) {
+    if (!matching_brackets) {
       os << ")\n";
       nodes.pop_back();
     }

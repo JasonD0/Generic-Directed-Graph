@@ -307,13 +307,12 @@ typename gdwg::Graph<N,E>::const_reverse_iterator gdwg::Graph<N,E>::rend() const
 
 /* iterator methods */
 template<typename N, typename E>
-typename gdwg::Graph<N,E>::const_iterator::value_type gdwg::Graph<N,E>::const_iterator::operator*() const {
-  const auto& nodeFrom = node_from_itr_->get()->GetValue();
-  const auto& nodeTo = node_to_itr_->first.lock()->GetValue();
+typename gdwg::Graph<N,E>::const_iterator::reference gdwg::Graph<N,E>::const_iterator::operator*() const {
+  const auto& nodeFrom = node_from_itr_->get()->value_;
+  const auto& nodeTo = node_to_itr_->first.lock()->value_;
   const auto& cost = *weight_itr_;
 
   return {nodeFrom, nodeTo, cost};
-  //return {cost};
 }
 
 template<typename N, typename E>
@@ -358,8 +357,8 @@ bool gdwg::Graph<N,E>::const_iterator::Next() {
     ++node_from_itr_;
     if (node_from_itr_ != node_from_end_) {
       node_to_itr_ = node_from_itr_->get()->edges_out_.begin();
-      node_to_start_ = std::prev(node_from_itr_->get()->edges_out_.begin());
       node_to_end_ = node_from_itr_->get()->edges_out_.end();
+      node_to_start_ = (node_to_itr_ == node_to_end_) ? node_from_itr_->get()->edges_out_.begin() : std::prev(node_from_itr_->get()->edges_out_.begin());
 
       std::shared_ptr<Node> sp = node_to_itr_->first.lock();
       if (!sp) {
