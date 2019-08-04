@@ -71,19 +71,21 @@ class Graph {
     const_iterator& operator--();
     const const_iterator operator--(int);
 
-   private:
     friend bool operator==(const const_iterator& lhs, const const_iterator& rhs) {
       // return lhs.outer_itr_ == rhs.outer_itr_ && (lhs.outer_itr_ == lhs.outer_end_itr_ ||
       // lhs.inner_itr_ == rhs.inner_itr_); return lhs.node_from_itr_ == rhs.node_from_itr_ &&
       // (lhs.node_from_itr_ == lhs.node_from_end_ || lhs.node_to_itr_ == rhs.node_to_itr_);
       return lhs.node_from_itr_ == rhs.node_from_itr_ &&
-             (lhs.node_from_itr_ == lhs.node_from_end_ ||
+          (lhs.node_from_itr_ == lhs.node_from_end_ ||
               (lhs.node_to_itr_ == rhs.node_to_itr_ &&
-               (lhs.node_to_itr_ == lhs.node_to_end_ || lhs.weight_itr_ == rhs.weight_itr_)));
+                  (lhs.node_to_itr_ == lhs.node_to_end_ || lhs.weight_itr_ == rhs.weight_itr_)));
     }
+
     friend bool operator!=(const const_iterator& lhs, const const_iterator& rhs) {
       return !(lhs == rhs);
     }
+
+   private:
     friend class Graph;
 
     bool Next();
@@ -200,8 +202,8 @@ class Graph {
         matching_brackets = false;
       }
       os << "  " << dest << " | " << cost << "\n";
-    }
 
+    }
     if (!matching_brackets) {
       os << ")\n";
       nodes.pop_back();

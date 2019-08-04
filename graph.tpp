@@ -271,7 +271,7 @@ typename gdwg::Graph<N, E>::const_iterator gdwg::Graph<N, E>::erase(const_iterat
   for (auto itr = begin(); itr != end(); ++itr) {
     if (it == itr) {
       auto [src, dest, cost] = *itr;
-      auto tmp = ++itr;
+      auto &tmp = ++itr;
       erase(src, dest, cost);
       return tmp;
     }
@@ -299,9 +299,9 @@ typename gdwg::Graph<N, E>::const_iterator gdwg::Graph<N, E>::cbegin() const {
             first->get()->edges_out_.begin(),
             std::prev(first->get()->edges_out_.begin()),
             first->get()->edges_out_.end(),
-            edges.begin()->second.begin(),
-            std::prev(edges.begin()->second.begin()),
-            edges.begin()->second.end()};
+            first->get()->edges_out_.begin()->second.begin(),
+            std::prev(first->get()->edges_out_.begin()->second.begin()),
+            first->get()->edges_out_.begin()->second.end()};
   }
 
   return cend();
@@ -391,16 +391,25 @@ typename gdwg::Graph<N, E>::const_iterator& gdwg::Graph<N, E>::const_iterator::o
 
 template <typename N, typename E>
 bool gdwg::Graph<N, E>::const_iterator::Next() {
+
   do {
     ++node_from_itr_;
+
     if (node_from_itr_ != node_from_end_) {
+
       node_to_itr_ = node_from_itr_->get()->edges_out_.begin();
       node_to_end_ = node_from_itr_->get()->edges_out_.end();
       node_to_start_ = (node_to_itr_ == node_to_end_)
                            ? node_from_itr_->get()->edges_out_.begin()
                            : std::prev(node_from_itr_->get()->edges_out_.begin());
 
+
+      if (node_to_itr_ == node_to_end_) {
+        continue;
+      }
+
       std::shared_ptr<Node> sp = node_to_itr_->first.lock();
+
       if (!sp) {
         node_to_itr_ = node_to_end_;  // owner of weak pointer dead  reset loop
 
@@ -461,6 +470,10 @@ bool gdwg::Graph<N, E>::const_iterator::Prev() {
       node_to_itr_ = std::prev(node_from_itr_->get()->edges_out_.end());      // last element
       node_to_start_ = std::prev(node_from_itr_->get()->edges_out_.begin());  // end pt
       node_to_end_ = node_from_itr_->get()->edges_out_.end();
+
+      if (node_to_itr_ == node_to_start_) {
+        continue;
+      }
 
       std::shared_ptr<Node> sp = node_to_itr_->first.lock();
       if (!sp) {
