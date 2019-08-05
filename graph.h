@@ -88,8 +88,8 @@ class Graph {
    private:
     friend class Graph;
 
-    bool Next();
-    bool Prev();
+    void Next();
+    void Prev(bool flag);
 
     typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator node_from_itr_;
     const typename std::set<std::shared_ptr<Node>, CompareByValue<Node>>::iterator node_from_start_;
