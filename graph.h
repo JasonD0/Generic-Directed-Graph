@@ -167,7 +167,13 @@ class Graph {
         return false;
       }
     }
-    return !((it1 == g1.end() && it2 != g2.end()) || (it1 != g1.end() && it2 == g2.end()));
+    return it1 == g1.end() && it2 == g2.end();
+    //g2.begin();
+    /*for (; it1 != g1.end(); ++it1) {
+      auto [n1_1, n1_2, c1] = *it1;
+      std::cout << n1_1 << " " << n1_2 << " " << c1 << "\n";
+    }*/
+    return true;
   }
 
   friend bool operator!=(const gdwg::Graph<N, E>& g1, const gdwg::Graph<N, E>& g2) {

@@ -271,7 +271,7 @@ typename gdwg::Graph<N, E>::const_iterator gdwg::Graph<N, E>::erase(const_iterat
   for (auto itr = begin(); itr != end(); ++itr) {
     if (it == itr) {
       auto [src, dest, cost] = *itr;
-      auto &tmp = ++itr;
+      auto tmp = ++itr;
       erase(src, dest, cost);
       return tmp;
     }
@@ -285,22 +285,37 @@ typename gdwg::Graph<N, E>::const_iterator gdwg::Graph<N, E>::cbegin() const {
 
   // get first node_from  with node_to valid
   auto edges = first->get()->edges_out_;
-  std::shared_ptr<Node> sp = edges.begin()->first.lock();
-  while (first != nodes_.end() && !sp) {
+
+  // get first node source with connections
+  while (first != nodes_.end() && edges.begin() == edges.end()) {
     ++first;
     edges = first->get()->edges_out_;
-    sp = edges.begin()->first.lock();
+  }
+
+  // get first node destination skipping invalid weak pointers (owner was deleted)
+  if (first != nodes_.end()) {
+    std::shared_ptr<Node> sp = edges.begin()->first.lock();
+    while (first != nodes_.end() && !sp) {
+      ++first;
+      edges = first->get()->edges_out_;
+      sp = edges.begin()->first.lock();
+    }
   }
 
   if (first != nodes_.end()) {
     return {first,
             std::prev(first),
+            //nodes_.begin(),
             nodes_.end(),
+
             first->get()->edges_out_.begin(),
-            std::prev(first->get()->edges_out_.begin()),
+            //std::prev(first->get()->edges_out_.begin()),
+            first->get()->edges_out_.begin(),
             first->get()->edges_out_.end(),
+
             first->get()->edges_out_.begin()->second.begin(),
-            std::prev(first->get()->edges_out_.begin()->second.begin()),
+            //std::prev(first->get()->edges_out_.begin()->second.begin()),
+            first->get()->edges_out_.begin()->second.begin(),
             first->get()->edges_out_.begin()->second.end()};
   }
 
@@ -377,7 +392,8 @@ typename gdwg::Graph<N, E>::const_iterator& gdwg::Graph<N, E>::const_iterator::o
       // found valid   weight itr
       if (sp) {
         weight_itr_ = node_to_itr_->second.begin();
-        weight_start_ = std::prev(node_to_itr_->second.begin());
+        //weight_start_ = std::prev(node_to_itr_->second.begin());
+        weight_start_ = node_to_itr_->second.begin();
         weight_end_ = node_to_itr_->second.end();
 
         // no edges for current
@@ -391,7 +407,6 @@ typename gdwg::Graph<N, E>::const_iterator& gdwg::Graph<N, E>::const_iterator::o
 
 template <typename N, typename E>
 bool gdwg::Graph<N, E>::const_iterator::Next() {
-
   do {
     ++node_from_itr_;
 
@@ -399,10 +414,8 @@ bool gdwg::Graph<N, E>::const_iterator::Next() {
 
       node_to_itr_ = node_from_itr_->get()->edges_out_.begin();
       node_to_end_ = node_from_itr_->get()->edges_out_.end();
-      node_to_start_ = (node_to_itr_ == node_to_end_)
-                           ? node_from_itr_->get()->edges_out_.begin()
-                           : std::prev(node_from_itr_->get()->edges_out_.begin());
-
+      //node_to_start_ = std::prev(node_from_itr_->get()->edges_out_.begin());
+      node_to_start_ = node_from_itr_->get()->edges_out_.begin();
 
       if (node_to_itr_ == node_to_end_) {
         continue;
@@ -416,7 +429,8 @@ bool gdwg::Graph<N, E>::const_iterator::Next() {
       } else {
         // found edge   weight itr
         weight_itr_ = node_to_itr_->second.begin();
-        weight_start_ = std::prev(node_to_itr_->second.begin());
+        //weight_start_ = std::prev(node_to_itr_->second.begin());
+        weight_start_ = node_to_itr_->second.begin();
         weight_end_ = node_to_itr_->second.end();
       }
     }
@@ -427,37 +441,45 @@ bool gdwg::Graph<N, E>::const_iterator::Next() {
 
 template <typename N, typename E>
 typename gdwg::Graph<N, E>::const_iterator& gdwg::Graph<N, E>::const_iterator::operator--() {
-  --weight_itr_;
-  if (weight_itr_ == weight_start_) {
-    --node_to_itr_;
 
-    // no more edges for current src
-    // find src node with edges
+  if (weight_itr_ == weight_start_) {   // trying to decrement start of weight
+
+    // when through last edge weight   if current node_to  is at beginning -> dont decrement -> change node_from
     if (node_to_itr_ == node_to_start_) {
       Prev();
 
-      // still have edges for current src
     } else {
-      // check weak pointer still valid
-      // get first valid dest with edges
-      std::shared_ptr<Node> sp = node_to_itr_->first.lock();  // get map key (weak pointer)
-      while (node_to_itr_ != node_to_start_ && !sp) {
-        --node_to_itr_;
-        sp = (node_to_itr_ != node_to_start_) ? node_to_itr_->first.lock() : sp;
-      }
-
-      // found valid   weight itr
-      if (sp) {
-        weight_itr_ = std::prev(node_to_itr_->second.end());      // get last weight
-        weight_start_ = std::prev(node_to_itr_->second.begin());  // set end pt
-        weight_end_ = node_to_itr_->second.end();
-
-        // no edges for current
-      } else {
-        Prev();
-      }
+      --node_to_itr_;
     }
+
+    // check weak pointer still valid (owner not deleted)
+    std::shared_ptr<Node> sp = node_to_itr_->first.lock();  // get map key (weak pointer)
+    while (node_to_itr_ != node_to_start_ && !sp) {
+      --node_to_itr_;
+      sp = node_to_itr_->first.lock();
+    }
+
+    // reached 1st element
+    if (node_to_itr_ == node_to_start_) {
+      sp = node_to_itr_->first.lock();
+    }
+
+    // found valid   weight itr
+    if (sp) {
+      weight_itr_ = std::prev(node_to_itr_->second.end());      // get last weight
+      //weight_start_ = std::prev(node_to_itr_->second.begin());  // set end pt
+      weight_start_ = node_to_itr_->second.begin();
+      weight_end_ = node_to_itr_->second.end();
+
+      // no edges for current
+    } else {
+      Prev();
+    }
+
+  } else {
+    --weight_itr_;
   }
+
   return *this;
 }
 
@@ -467,26 +489,25 @@ bool gdwg::Graph<N, E>::const_iterator::Prev() {
     --node_from_itr_;
 
     if (node_from_itr_ != node_from_start_) {
-      node_to_itr_ = std::prev(node_from_itr_->get()->edges_out_.end());      // last element
-      node_to_start_ = std::prev(node_from_itr_->get()->edges_out_.begin());  // end pt
-      node_to_end_ = node_from_itr_->get()->edges_out_.end();
 
-      if (node_to_itr_ == node_to_start_) {
-        continue;
-      }
+      node_to_itr_ = std::prev(node_from_itr_->get()->edges_out_.end());      // last element
+      node_to_end_ = node_from_itr_->get()->edges_out_.end();
+      //node_to_start_ = std::prev(node_from_itr_->get()->edges_out_.begin());
+      node_to_start_ = node_from_itr_->get()->edges_out_.begin();
 
       std::shared_ptr<Node> sp = node_to_itr_->first.lock();
       if (!sp) {
-        node_to_itr_ = node_to_start_;  // owner of weak pointer dead  reset loop
+        node_to_start_ = node_to_end_;  // owner of weak pointer dead  reset loop
 
       } else {
         // found edge   weight itr
         weight_itr_ = std::prev(node_to_itr_->second.end());      // last element
-        weight_start_ = std::prev(node_to_itr_->second.begin());  // end pt
+        //weight_start_ = std::prev(node_to_itr_->second.begin());  // end pt
+        weight_start_ = node_to_itr_->second.begin();
         weight_end_ = node_to_itr_->second.end();
       }
     }
-  } while (node_from_itr_ != node_from_start_ && node_to_itr_ == node_to_start_);
+  } while (node_from_itr_ != node_from_start_ && node_to_start_ == node_to_end_); // while not finished with node from and node to is empty (ie no edges)
 
   return node_from_itr_ != node_from_start_;
 }
@@ -503,7 +524,7 @@ template <typename N, typename E>
 const typename gdwg::Graph<N, E>::const_iterator gdwg::Graph<N, E>::const_iterator::
 operator--(int) {
   auto tmp{*this};
-  ++(*this);
+  --(*this);
   return tmp;
 }
 
