@@ -72,13 +72,10 @@ class Graph {
     const const_iterator operator--(int);
 
     friend bool operator==(const const_iterator& lhs, const const_iterator& rhs) {
-      // return lhs.outer_itr_ == rhs.outer_itr_ && (lhs.outer_itr_ == lhs.outer_end_itr_ ||
-      // lhs.inner_itr_ == rhs.inner_itr_); return lhs.node_from_itr_ == rhs.node_from_itr_ &&
-      // (lhs.node_from_itr_ == lhs.node_from_end_ || lhs.node_to_itr_ == rhs.node_to_itr_);
       return lhs.node_from_itr_ == rhs.node_from_itr_ &&
-          (lhs.node_from_itr_ == lhs.node_from_end_ ||
+             (lhs.node_from_itr_ == lhs.node_from_end_ ||
               (lhs.node_to_itr_ == rhs.node_to_itr_ &&
-                  (lhs.node_to_itr_ == lhs.node_to_end_ || lhs.weight_itr_ == rhs.weight_itr_)));
+               (lhs.node_to_itr_ == lhs.node_to_end_ || lhs.weight_itr_ == rhs.weight_itr_)));
     }
 
     friend bool operator!=(const const_iterator& lhs, const const_iterator& rhs) {
@@ -168,12 +165,6 @@ class Graph {
       }
     }
     return it1 == g1.end() && it2 == g2.end();
-    //g2.begin();
-    /*for (; it1 != g1.end(); ++it1) {
-      auto [n1_1, n1_2, c1] = *it1;
-      std::cout << n1_1 << " " << n1_2 << " " << c1 << "\n";
-    }*/
-    return true;
   }
 
   friend bool operator!=(const gdwg::Graph<N, E>& g1, const gdwg::Graph<N, E>& g2) {
@@ -208,8 +199,8 @@ class Graph {
         matching_brackets = false;
       }
       os << "  " << dest << " | " << cost << "\n";
-
     }
+
     if (!matching_brackets) {
       os << ")\n";
       nodes.pop_back();
@@ -234,3 +225,4 @@ class Graph {
 #include "graph.tpp"
 
 #endif  // ASSIGNMENTS_DG_GRAPH_H_
+

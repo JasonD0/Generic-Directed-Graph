@@ -492,7 +492,7 @@ SCENARIO("erase") {
           REQUIRE(*itr == std::make_tuple("B", "A", 9));
         }
 
-        WHEN("erasing the last edge") {
+        WHEN("erasing the end edge in the iterator") {
           auto end = g.erase(itr);
 
           THEN("the end iterator is returned") { REQUIRE(end == g.end()); }
@@ -686,13 +686,14 @@ SCENARIO("reverse iterating with the first node having no edges") {
     WHEN("pre-incrementing the iterator") {
       ++it;
 
-      THEN("the previous tuple of node from, node to and edge weight is returned ordered by node from then node to then edge weight") {
+      THEN("the previous tuple of node from, node to and edge weight is returned ordered by node "
+           "from then node to then edge weight") {
         REQUIRE(std::get<0>(*it) == "D");
         REQUIRE(std::get<1>(*it) == "C");
         REQUIRE(std::get<2>(*it) == 4.0);
       }
 
-      /*WHEN("pre-decrementing the iterator") {
+      WHEN("pre-decrementing the iterator") {
         --it;
 
         THEN("the next tuple of node from, node to and edge weight is returned") {
@@ -700,7 +701,7 @@ SCENARIO("reverse iterating with the first node having no edges") {
           REQUIRE(std::get<1>(*it) == "C");
           REQUIRE(std::get<2>(*it) == 9.0);
         }
-      }*/
+      }
     }
 
     WHEN("post-incrementing the iterator") {
@@ -712,7 +713,7 @@ SCENARIO("reverse iterating with the first node having no edges") {
         REQUIRE(std::get<2>(*it) == 4.0);
       }
 
-      /*WHEN("post-decrementing the iterator") {
+      WHEN("post-decrementing the iterator") {
         it--;
 
         THEN("the result is the same as pre-decrementing") {
@@ -720,7 +721,7 @@ SCENARIO("reverse iterating with the first node having no edges") {
           REQUIRE(std::get<1>(*it) == "C");
           REQUIRE(std::get<2>(*it) == 9.0);
         }
-      }*/
+      }
     }
 
     WHEN("iterating past the first edge") {
@@ -734,6 +735,7 @@ SCENARIO("reverse iterating with the first node having no edges") {
     }
   }
 }
+
 SCENARIO("reverse iterating with the last node (highest value) having no edges") {
   GIVEN("an iterator to the end of a graph") {
     gdwg::Graph<std::string, int> g{"A", "C", "B", "D"};
@@ -743,7 +745,7 @@ SCENARIO("reverse iterating with the last node (highest value) having no edges")
     g.InsertEdge("B", "B", 50);
     auto it = g.rbegin();
 
-    WHEN("iterating towards the last node") {
+    WHEN("iterating towards the first edge") {
       ++it;
       ++it;
       auto last = ++it;
@@ -758,7 +760,6 @@ SCENARIO("reverse iterating with the last node (highest value) having no edges")
     }
   }
 }
-
 
 SCENARIO("reverse iterating with a middle node having no edges") {
   GIVEN("an iterator to the end of a graph") {
@@ -786,6 +787,56 @@ SCENARIO("reverse iterating with a middle node having no edges") {
         REQUIRE(std::get<1>(*after) == 4);
         REQUIRE(std::get<2>(*after) == "five");
       }
+
+      WHEN("decrementing the edge after") {
+        --after;
+
+        THEN("the iterator returned is the same as the iterator before") {
+          REQUIRE(std::get<0>(*after) == 2);
+          REQUIRE(std::get<1>(*after) == 1);
+          REQUIRE(std::get<2>(*after) == "three");
+          REQUIRE(after == before);
+        }
+      }
     }
   }
 }
+
+SCENARIO("deleting edges and nodes then iterating graph") {
+  GIVEN("a graph") {
+    gdwg::Graph<std::string, int> g;
+    g.InsertNode("A");
+    g.InsertNode("B");
+    g.InsertEdge("A", "B", 2);
+    g.InsertEdge("B", "A", 9);
+    g.InsertEdge("A", "B", 4);
+
+    WHEN("a node is deleted") {
+      g.DeleteNode("B");
+
+      THEN("all edges containing the node does not appear when iterator") {
+        REQUIRE(g.end() == g.begin());
+      }
+    }
+
+    WHEN("an edge is erased and the altered graph is iterated through") {
+      g.erase("A", "B", 4);
+      auto start = g.begin();
+      auto middle = ++start;
+      auto end = ++start;
+
+      THEN("the edge does not appear when iterating") {
+        REQUIRE(std::get<0>(*g.begin()) == "A");
+        REQUIRE(std::get<1>(*g.begin()) == "B");
+        REQUIRE(std::get<2>(*g.begin()) == 2);
+
+        REQUIRE(std::get<0>(*middle) == "B");
+        REQUIRE(std::get<1>(*middle) == "A");
+        REQUIRE(std::get<2>(*middle) == 9);
+
+        REQUIRE(end == g.end());
+      }
+    }
+  }
+}
+
